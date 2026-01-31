@@ -1,0 +1,32 @@
+{
+  "security": {
+    "requireAdminPassword": true,
+    "adminPassword": "admin123",
+    "allowFromIPs": [
+      "127.0.0.1",
+      "::1"
+    ]
+  },
+  "features": {
+    "enableFileManager": true,
+    "enableCommandExecution": false
+  },
+  "fileManager": {
+    "allowedPaths": [
+      "C:\\Users\\win\\Desktop\\代码\\视频播放网页",
+      "C:\\Users\\win\\Desktop\\代码\\视频播放网页\\videos",
+      "C:\\Users\\win\\Desktop\\代码\\视频播放网页\\public",
+      "C:\\Users\\win\\Desktop\\代码\\视频播放网页\\data"
+    ]
+  },
+  "commandExecution": {
+    "allowedCommands": [
+      "ls",
+      "pwd",
+      "whoami"
+    ]
+  },
+  "video": {
+    "titlePattern": "${originalFilenameWithoutExtension}"
+  }
+}

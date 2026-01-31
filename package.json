@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "child_process": "^1.0.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "esm": "^3.2.25",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "multer": "^2.0.2",
+    "open": "^10.2.0",
+    "os": "^0.1.2",
+    "ps-list": "^9.0.0",
+    "systeminformation": "^5.27.11",
+    "uuid": "^13.0.0"
+  }
+}
