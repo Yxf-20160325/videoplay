@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 视频播放平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 400px; padding: 2rem; }
+        .register-card { background: white; border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: slideUp 0.5s ease; }
+        .register-header { text-align: center; margin-bottom: 2rem; }
+        .register-header i { font-size: 3rem; color: #667eea; margin-bottom: 1rem; }
+        .register-header h1 { font-size: 2rem; color: #333; margin-bottom: 0.5rem; }
+        .register-header p { color: #666; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #999; }
+        .form-group input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; transition: all 0.3s ease; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        
+        .btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-bottom: 1rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .divider { text-align: center; margin: 1.5rem 0; position: relative; }
+        .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e0e0e0; }
+        .divider span { background: white; padding: 0 1rem; position: relative; color: #999; font-size: 0.9rem; }
+        
+        .login-link { text-align: center; }
+        .login-link a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .login-link a:hover { text-decoration: underline; }
+        
+        .server-info { text-align: center; margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; font-size: 0.9rem; color: #666; }
+        .server-info strong { color: #667eea; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .loading { display: none; text-align: center; }
+        .loading.show { display: block; }
+        .loading i { font-size: 2rem; animation: spin 1s linear infinite; color: #667eea; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .requirements { background: #f8f9fa; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; color: #666; }
+        .requirements ul { margin-left: 1.5rem; margin-top: 0.5rem; }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .register-card { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-card">
+            <div class="register-header">
+                <i class="fas fa-user-plus"></i>
+                <h1>创建账号</h1>
+                <p>注册后即可观看视频内容</p>
+            </div>
+            
+            <div class="requirements">
+                <strong>注册要求：</strong>
+                <ul>
+                    <li>用户名至少3个字符</li>
+                    <li>密码至少6个字符</li>
+                    <li>不支持特殊字符的用户名</li>
+                </ul>
+            </div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" required placeholder="请输入用户名" autocomplete="username">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">邮箱（选填）</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="请输入邮箱地址">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" required placeholder="请输入密码" autocomplete="new-password">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="请再次输入密码" autocomplete="new-password">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" id="registerBtn">
+                    <span class="btn-text">注册</span>
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>已有账号？</span>
+            </div>
+            
+            <div class="login-link">
+                <a href="login.html">立即登录</a>
+            </div>
+            
+            <div class="server-info">
+                <strong>服务器地址:</strong> <span id="serverAddress">检测中...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let serverAddress = 'localhost:3000';
+        
+        // 获取服务器地址
+        async function getServerAddress() {
+            try {
+                const response = await fetch('/api/server/info');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        serverAddress = `${data.serverIp}:${data.port}`;
+                    }
+                }
+            } catch (error) {
+                console.error('获取服务器地址失败:', error);
+                const protocol = window.location.protocol;
+                const host = window.location.host;
+                serverAddress = host;
+            } finally {
+                document.getElementById('serverAddress').textContent = serverAddress;
+            }
+        }
+        
+        // 注册处理
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const registerBtn = document.getElementById('registerBtn');
+            const btnText = registerBtn.querySelector('.btn-text');
+            const loading = registerBtn.querySelector('.loading');
+            
+            // 验证密码是否一致
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致');
+                return;
+            }
+            
+            // 验证密码长度
+            if (password.length < 6) {
+                alert('密码长度至少为6位');
+                return;
+            }
+            
+            // 验证用户名长度
+            if (username.length < 3) {
+                alert('用户名长度至少为3位');
+                return;
+            }
+            
+            // 显示加载状态
+            btnText.style.display = 'none';
+            loading.style.display = 'block';
+            registerBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('注册成功！请登录');
+                    // 跳转到登录页面
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.message || '注册失败，请重试');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                alert('网络错误，请检查服务器是否启动');
+            } finally {
+                // 恢复按钮状态
+                btnText.style.display = 'block';
+                loading.style.display = 'none';
+                registerBtn.disabled = false;
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            getServerAddress();
+            
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+        });
+    </script>
+</body>
+</html>

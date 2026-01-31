@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - 视频播放平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 400px; padding: 2rem; }
+        .login-card { background: white; border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: slideUp 0.5s ease; }
+        .login-header { text-align: center; margin-bottom: 2rem; }
+        .login-header i { font-size: 3rem; color: #667eea; margin-bottom: 1rem; }
+        .login-header h1 { font-size: 2rem; color: #333; margin-bottom: 0.5rem; }
+        .login-header p { color: #666; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #555; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #999; }
+        .form-group input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; transition: all 0.3s ease; }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        
+        .btn { width: 100%; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-bottom: 1rem; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .divider { text-align: center; margin: 1.5rem 0; position: relative; }
+        .divider::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #e0e0e0; }
+        .divider span { background: white; padding: 0 1rem; position: relative; color: #999; font-size: 0.9rem; }
+        
+        .register-link { text-align: center; }
+        .register-link a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .register-link a:hover { text-decoration: underline; }
+        
+        .server-info { text-align: center; margin-top: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; font-size: 0.9rem; color: #666; }
+        .server-info strong { color: #667eea; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .loading { display: none; text-align: center; }
+        .loading.show { display: block; }
+        .loading i { font-size: 2rem; animation: spin 1s linear infinite; color: #667eea; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .login-card { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-video"></i>
+                <h1>欢迎登录</h1>
+                <p>登录后即可观看视频</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="username" name="username" required placeholder="请输入用户名" autocomplete="username">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" autocomplete="current-password"  required placeholder="请输入密码" autocomplete="current-password">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" id="loginBtn">
+                    <span class="btn-text">登录</span>
+                    <div class="loading">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>还没有账号？</span>
+            </div>
+            
+            <div class="register-link">
+                <a href="register.html">立即注册</a>
+            </div>
+            
+            <div class="server-info">
+                <strong>服务器地址:</strong> <span id="serverAddress">检测中...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('auth-form');
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const authSubtitle = document.getElementById('auth-subtitle');
+        const confirmPasswordGroup = document.getElementById('confirm-password-group');
+        const submitBtn = document.getElementById('submit-btn');
+        const messageContainer = document.getElementById('message-container');
+
+        let isLoginMode = true; // 默认为登录模式
+
+        // 1. 切换登录/注册模式
+        authToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+
+            if (isLoginMode) {
+                // 切换到登录模式
+                authToggleLink.textContent = '立即注册';
+                authSubtitle.textContent = '请登录您的账号';
+                confirmPasswordGroup.style.display = 'none';
+                submitBtn.textContent = '登录';
+                form.reset(); // 清空输入
+            } else {
+                // 切换到注册模式
+                authToggleLink.textContent = '已有账号？立即登录';
+                authSubtitle.textContent = '创建一个新账号';
+                confirmPasswordGroup.style.display = 'block';
+                submitBtn.textContent = '注册';
+                form.reset(); // 清空输入
+            }
+            clearMessage(); // 切换时清空消息
+        });
+
+        // 2. 处理表单提交
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // 注册模式下的额外验证
+            if (!isLoginMode) {
+                if (password !== confirmPassword) {
+                    displayMessage('两次输入的密码不一致！', 'error');
+                    return;
+                }
+                if (password.length < 6) {
+                    displayMessage('密码长度不能少于6位！', 'error');
+                    return;
+                }
+            }
+
+            try {
+                // 根据当前模式选择 API 端点
+                const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayMessage(data.message, 'success');
+                    // 如果是登录成功，保存 sessionId
+                    if (isLoginMode) {
+                        localStorage.setItem('sessionId', data.sessionId);
+                    }
+                    // 操作成功后，跳转到首页
+                    setTimeout(() => window.location.href = '/', 1000);
+
+                } else {
+                    // 处理失败情况
+                    displayMessage(data.message, 'error');
+                }
+
+            } catch (error) {
+                console.error('请求过程中发生错误:', error);
+                displayMessage('网络错误，请稍后再试。', 'error');
+            }
+        });
+
+        // 显示消息的辅助函数
+        function displayMessage(text, type) {
+            clearMessage(); // 先清空
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            messageContainer.appendChild(messageDiv);
+        }
+        
+        // 清空消息的辅助函数
+        function clearMessage() {
+            messageContainer.innerHTML = '';
+        }
+    });
+    </script>
+</body>
+</html>

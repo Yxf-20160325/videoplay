@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放 - 我的视频平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* 视频播放器容器 */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* 视频播放器 */
+        .video-player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 比例 */
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* 视频信息 */
+        .video-info {
+            margin-bottom: 2rem;
+        }
+
+        .video-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .video-meta {
+            display: flex;
+            gap: 2rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-item i {
+            color: #667eea;
+        }
+
+        .video-description {
+            color: #666;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+
+        /* 视频列表 */
+        .video-list {
+            max-width: 1400px;
+            margin: 3rem auto 2rem;
+            padding: 0 1rem;
+        }
+
+        .video-list h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* 视频缩略图 */
+        .video-thumbnail {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .video-thumbnail:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .thumbnail-img {
+            width: 100%;
+            height: 160px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumbnail-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 1rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-thumbnail:hover .thumbnail-overlay {
+            opacity: 1;
+        }
+
+        .video-title-small {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .video-meta-small {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* 播放按钮 */
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(102, 126, 234, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .play-button:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: rgba(102, 126, 234, 1);
+        }
+
+        .play-button i {
+            font-size: 1.5rem;
+            margin-left: 3px;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .video-title {
+                font-size: 1.5rem;
+            }
+            
+            .video-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+            
+            .thumbnail-img {
+                height: 100px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 错误提示 */
+        .error-message {
+            text-align: center;
+            padding: 3rem;
+            color: #ff6b6b;
+        }
+
+        .error-message i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <!-- 视频播放器 -->
+        <div class="video-player-wrapper">
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <video id="videoPlayer" controls style="display: none;">
+                <source src="" type="video/mp4">
+                您的浏览器不支持视频播放。
+            </video>
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>视频加载失败</h3>
+                <p>请稍后重试或联系管理员。</p>
+            </div>
+        </div>
+
+        <!-- 视频信息 -->
+        <div class="video-info">
+            <h1 class="video-title" id="videoTitle">加载中...</h1>
+            <div class="video-meta">
+                <div class="meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="videoDuration">--:--</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-calendar"></i>
+                    <span id="videoDate">--</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-download"></i>
+                    <span id="videoSize">-- MB</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-eye"></i>
+                    <span id="videoViews">-- 次播放</span>
+                </div>
+            </div>
+            <p class="video-description" id="videoDescription"></p>
+        </div>
+    </div>
+
+    <!-- 相关视频 -->
+    <div class="video-list">
+        <h2>更多视频</h2>
+        <div class="video-grid" id="relatedVideos">
+            <!-- 相关视频将动态加载 -->
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // API基础URL
+        const API_BASE_URL = '/api';
+
+        // 全局变量
+        let currentVideoId = getQueryParam('video');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if (currentVideoId) {
+                // checkUserLogin();
+                loadVideo(currentVideoId);
+                loadRelatedVideos();
+
+            } else {
+                showError('参数错误，请指定要播放的视频ID');
+            }
+        });
+
+
+
+function checkUserLogin() {
+    const sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) {
+        alert('请先登录再观看视频');
+        window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+        return;
+    }
+    
+    // 验证会话是否有效
+    fetch('/api/auth/user', {
+        headers: {
+            'session-id': sessionId
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('会话已过期');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 用户已登录，继续加载视频
+        console.log('已登录用户:', data.user.username);
+    })
+    .catch(error => {
+        console.error('会话验证失败:', error);
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('user');
+        alert('登录已过期，请重新登录');
+        window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+    });
+}
+
+        // 加载视频信息并播放
+        async function loadVideo(videoId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos/${videoId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const video = data.video;
+                    const videoPlayer = document.getElementById('videoPlayer');
+                    const loading = document.getElementById('loading');
+                    
+                    // 更新视频信息
+                    document.getElementById('videoTitle').textContent = video.title;
+                    document.getElementById('videoDuration').textContent = video.duration;
+                    document.getElementById('videoDate').textContent = new Date(video.uploadDate).toLocaleDateString();
+                    document.getElementById('videoSize').textContent = formatFileSize(video.size);
+                    document.getElementById('videoViews').textContent = `${Math.floor(Math.random() * 1000)} 次播放`;
+                    document.getElementById('videoDescription').textContent = 
+                        video.description || '暂无视频描述';
+                    
+                    // 设置视频源
+                    videoPlayer.src = video.url;
+                    
+                    // 视频加载完成后隐藏加载动画
+                    videoPlayer.addEventListener('loadedmetadata', () => {
+                        loading.style.display = 'none';
+                        videoPlayer.style.display = 'block';
+                        
+                        // 自动播放（需要用户交互）
+                        videoPlayer.play().catch(error => {
+                            console.log('自动播放被阻止:', error);
+                        });
+                    });
+                    
+                    // 视频加载错误处理
+                    videoPlayer.addEventListener('error', () => {
+                        loading.style.display = 'none';
+                        showError('视频加载失败，请检查文件是否存在');
+                    });
+                    
+                } else {
+                    showError(data.message || '视频不存在');
+                }
+            } catch (error) {
+                console.error('加载视频失败:', error);
+                showError('网络错误，请检查服务器是否启动');
+            }
+        }
+
+        // 加载相关视频
+        async function loadRelatedVideos() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/videos`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const relatedVideosContainer = document.getElementById('relatedVideos');
+                    relatedVideosContainer.innerHTML = '';
+                    
+                    // 过滤掉当前视频，随机选择6个相关视频
+                    const otherVideos = data.videos.filter(v => v.id !== currentVideoId);
+                    const shuffled = otherVideos.sort(() => 0.5 - Math.random());
+                    const selectedVideos = shuffled.slice(0, 6);
+                    
+                    if (selectedVideos.length > 0) {
+                        selectedVideos.forEach(video => {
+                            const videoCard = createRelatedVideoCard(video);
+                            relatedVideosContainer.appendChild(videoCard);
+                        });
+                    } else {
+                        relatedVideosContainer.innerHTML = `
+                            <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #999;">
+                                <i class="fas fa-video" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                                <p>暂无其他视频</p>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('加载相关视频失败:', error);
+            }
+        }
+
+        // 创建相关视频卡片
+        function createRelatedVideoCard(video) {
+            const card = document.createElement('div');
+            card.className = 'video-thumbnail';
+            
+            const uploadDate = new Date(video.uploadDate).toLocaleDateString();
+            
+            card.innerHTML = `
+                <div class="thumbnail-img">
+                    <i class="fas fa-play-circle" style="font-size: 2rem; opacity: 0.7;"></i>
+                    <div class="play-button">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+                <div class="thumbnail-overlay">
+                    <div class="video-title-small">${video.title}</div>
+                    <div class="video-meta-small">${uploadDate}</div>
+                </div>
+            `;
+            
+            // 点击跳转
+            card.addEventListener('click', () => {
+                window.location.href = `watch.html?video=${video.id}`;
+            });
+            
+            return card;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('videoPlayer').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            
+            document.getElementById('errorMessage').innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>视频加载失败</h3>
+                <p>${message}</p>
+            `;
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
