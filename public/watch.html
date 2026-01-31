@@ -371,6 +371,32 @@ function checkUserLogin() {
                         });
                     });
                     
+                    // 当视频可以开始播放时也隐藏加载动画
+                    videoPlayer.addEventListener('canplay', () => {
+                        loading.style.display = 'none';
+                        videoPlayer.style.display = 'block';
+                    });
+                    
+                    // 当视频缓存足够开始播放时隐藏加载动画
+                    videoPlayer.addEventListener('canplaythrough', () => {
+                        loading.style.display = 'none';
+                        videoPlayer.style.display = 'block';
+                    });
+                    
+                    // 当视频数据开始加载时也可以隐藏加载动画
+                    videoPlayer.addEventListener('progress', () => {
+                        // 检查是否有缓存数据
+                        if (videoPlayer.buffered.length > 0) {
+                            const bufferedEnd = videoPlayer.buffered.end(videoPlayer.buffered.length - 1);
+                            const duration = videoPlayer.duration;
+                            // 如果缓存了至少1秒或者超过总时长的5%，就隐藏加载动画
+                            if (bufferedEnd > 1 || (duration > 0 && bufferedEnd / duration > 0.05)) {
+                                loading.style.display = 'none';
+                                videoPlayer.style.display = 'block';
+                            }
+                        }
+                    });
+                    
                     // 视频加载错误处理
                     videoPlayer.addEventListener('error', () => {
                         loading.style.display = 'none';
